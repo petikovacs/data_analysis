@@ -1,0 +1,88 @@
+================================================================================
+SCIENTIFIC DATA QUALITY AUDIT & PROFILING REPORT
+================================================================================
+
+###########################################################################
+AUDITING DATASET: 1_Agriculture_OWID | FILE: agricultural-water-withdrawals.csv
+###########################################################################
+1. Dimensions: 6706 rows x 4 columns
+2. Columns: ['Entity', 'Code', 'Year', 'Agricultural water withdrawal']
+3. Measurement Unit: Cubic metres per year (m3/year)
+4. Missing Values:
+   {'Code': 391}
+5. Duplicate Rows based on keys ['Code', 'Entity', 'Year']: 0
+6. Time Range: 1965 to 2023 (59 unique years) | Global Missing Years: None
+7. Unique Area Codes in 'Code': 191
+10. Numerical Summary for 'Agricultural water withdrawal':
+    - Min: 0.0000 | Median: 1177999973.0000 | Max: 2911836181641.0000
+    - Negative values (less than 0): 0 rows | Countries: []
+    - Zero values (equal to 0): 68 rows | Countries count: 4
+    - Statistical Outliers (IQR): 1118 rows
+
+###########################################################################
+AUDITING DATASET: 2_FAO_Sectors | FILE: aquastat_sector_withdrawal.csv
+###########################################################################
+1. Dimensions: 13552 rows x 10 columns
+2. Columns: ['m49', 'VariableGroup', 'Subgroup', 'Variable', 'Area', 'Year', 'Value', 'Unit', 'Symbol', 'IsAggregate']
+3. Measurement Units: ['10^9 m3/year']
+4. Missing Values:
+   None (0 missing)
+5. Duplicate Rows based on keys ['m49', 'Area', 'Year', 'Variable']: 0
+6. Time Range: 2001 to 2023 (23 unique years) | Global Missing Years: None
+7. Unique Area Codes in 'm49': 204
+8. Symbols/Flags ('Symbol'): {'I': 7492, 'E': 3493, 'A': 2171, 'X': 396}
+9. Categories ('Variable'): ['Industrial water withdrawal', 'Municipal water withdrawal', 'Total water withdrawal']
+10. Numerical Summary for 'Value':
+    - Min: 0.0000 | Median: 0.8066 | Max: 4069.8647
+    - Negative values (less than 0): 0 rows | Countries: []
+    - Zero values (equal to 0): 100 rows | Countries count: 7
+    - Statistical Outliers (IQR): 2214 rows
+
+###########################################################################
+AUDITING DATASET: 3_SDG_Water_Stress | FILE: sdg_water_stress.csv.xlsx
+###########################################################################
+1. Dimensions: 20016 rows x 28 columns
+2. Columns: ['FREQ', 'REPORTING_TYPE', 'INDICATOR', 'SERIES_ID', 'SERIES', 'SERIES_DESC', 'REF_AREA', 'AREA', 'TIME_PERIOD', 'TIME_DETAIL', 'OBS_VALUE', 'UNIT_MEASURE', 'UNIT_MULT', 'OBS_STATUS', 'NATURE', 'SOURCE_DETAIL', 'COMMENT_OBS', 'PRICE_SEVERITY_LEVEL', 'LAND_COVER', 'SEX', 'AGE', 'UPPER_BOUND', 'LOWER_BOUND', 'BASE_PER', 'PRODUCT', 'ACTIVITY', 'BIOCLIMATIC_BELT', 'URBANISATION']
+3. Measurement Units: ['PT']
+4. Missing Values:
+   {'OBS_VALUE': 745, 'SOURCE_DETAIL': 745, 'COMMENT_OBS': 19271, 'UPPER_BOUND': 20016, 'LOWER_BOUND': 20016, 'BASE_PER': 20016}
+5. Duplicate Rows based on keys ['REF_AREA', 'AREA', 'TIME_PERIOD', 'ACTIVITY']: 0
+6. Time Range: 2000 to 2023 (24 unique years) | Global Missing Years: None
+7. Unique Area Codes in 'REF_AREA': 211
+8. Symbols/Flags ('OBS_STATUS'): {'E': 13611, 'I': 4349, 'A': 1311, 'O': 745}
+9. Categories ('ACTIVITY'): ['_T', 'ISIC4_A01_A0210_A0322', 'ISIC4_GTT', 'ISIC4_BTFXE']
+10. Numerical Summary for 'OBS_VALUE':
+    - Min: 0.0000 | Median: 3.5100 | Max: 3850.5000
+    - Negative values (less than 0): 0 rows | Countries: []
+    - Zero values (equal to 0): 265 rows | Countries count: 19
+    - Statistical Outliers (IQR): 2582 rows
+
+###########################################################################
+AUDITING UNSD EXCEL DATASET: 4_UN_Freshwater_Abstracted | FILE: Freshwater abstracted.xlsx
+###########################################################################
+1. Sheet Used: 'Data' | Measurement Unit: Million cubic metres (Million m3)
+2. Metadata Header Rows Skipped: 0 rows
+3. Footnotes Extracted: 4 definitions saved to -> 4_UN_Freshwater_Abstracted_footnotes_dictionary.csv
+4. Data Sources (U=UNSD, E=Eurostat, O=OECD): {'U': 82, nan: 38, 'E': 37}
+5. Total Countries/Areas: 157 | Duplicate Countries: 0
+6. Missing Values ('...'): 2089 out of 3768 cells (55.4%)
+7. Countries with 100% Missing Data (43): ['Austria', 'Bosnia and Herzegovina', 'Italy', 'Norway', 'Portugal', 'Excluding abstraction for hydroelectric generation.', 'Data supplied by the local water company', 'Information provided by Rajshahi Water Supply and Sewerage Authority (RWASA ); only Rajshahi City is considered.', 'Summation of data provided by Chittagong and Khulna Water Supply and Sewerage Authority; only two cities are considered.', 'Summation of data provided by Dhaka, Chittagong and Khulna Water Supply and Sewerage Authority; only three cities are considered.', 'Excluding water taken directly by households from the environment.', 'Information provided by the Authority for Control and Social Control of Potable Water and Basic Sanitation (AAPS), considers 60 Entities that provide Potable Water and Sanitary Sewer Services (EPSA), with regulatory follow-up.', 'Social Water and Basic Sanitation (AAPS), considers 70 entities that provide Potable Water and Sanitary Sewer Services (EPSA), with regulatory follow-up.', 'Information provided by the Authority for Supervision and Social Control of Drinking Water and Basic Sanitation (AAPS), considering 77 Drinking Water and Sanitary Sewer Service Provider Entities (EPSA), with regulatory monitoring.', 'Estimates of groundwater and surface water withdrawals are based on water permits data. Environmental-Economic Accounting for Water in Brazil - 2018 - http://www3.ana.gov.br/portal/ANA/todos-os-documentos-do-portal/documentos-spr/contas_economicas_en.pdf/', 'Freshwater abstracted by agriculture, forestry and fishing (ISIC 01-03) is not included.', 'Water from local reservoirs.', 'The figures correspond to the national "Water Balance" system, of national scope and implemented by the INRH as the governing body of the activity in the country. There are absent the extractions made by the homes themselves for use in situ, from various sources (including rainwater), as well as reused and desalinated water.', 'Data refer to public supply to all economic activities.', 'Data refer to Addis Ababa city only.', 'Data refer to water abstracted by water supply industry.', 'These statistical items in Iran are compiled based on nationwide data collection and the solution of balance equations, a process that takes approximately 9 years. These provided statistics for 2011 and 2020, presents the long-term average for these years.', 'It consists of 823.3 million cubic meters abstracted from all sources and 11.68 million cubic meters abstracted from saline ground water and desalinized. ', 'Freshwater abstraction: these are figures obtained from the amounts indicated under permits issued by the Water Resources Authority.', 'The total amount of freshwater (surface and groundwater) is equal to 2600 mio m3/y, of which only 2000 mio m3/y are effectively exploitable, whereas only 1250 mio m3/y are being abstracted (by public and private bodies) and are ready for consumption.', 'Revised data.', 'Excludes Sabah and Sarawak.', 'Total subscribers of drinking water services (household uses and similar non-household uses from public establishments, businesses).', 'Data refer to Mandalay and Nay Pyi Taw cities only. ', 'Data refer to only Mandalay.', 'Data are modelled and sourced from Qatar General Electricity and Water Corporation.', 'Refers to abstracted volumes. Information on losses during transport is unavailable, except for the drinking water supply network (see sheet W3).', 'Units of figures are in megalitres (1000 m3)', 'The data come from the Senegalese Des Eaux (SDE). They do not cover the total of the withdrawals carried out on the territory but just those carried out by the SDE.', 'Annual freshwater withdrawals are the total total freshwater withdrawals, without taking into account the evaporation losses of the accumulation basins.', 'Includes water abstraction by water supply industry, agriculture, forestry and fishing, and manufacturing industries only.', 'Includes water abstraction by water supply industry only.', 'Desalinated water is included.', 'Water abstracted from boreholes, springs, and dams is not included.', 'Data refer to water produced by the National Water and Sewerage Corporation (NWSC).  The NWSC only delivers water in larger towns and cities.', 'Excludes abstraction by households.', 'Freshwater abstracted was calculated as renewable freshwater resources subtract the outflow of surface and groundwater from the country. Groundwater utilisation constitute 28% of total usage while surface constitute 72% of water utilisation based on the study carried out by World Bank in 2012 under the water policy.', 'Eurostat: This designation is without prejudice to position on status, and is in line with UNSCR 1244/1999 and the ICJ Opinion on the Kosovo declaration of independence.']
+8. Countries with Negative Values (less than 0): []
+9. Countries with Zero Values (equal to 0): ['South Africa']
+10. Countries with Methodological Footnotes: 45 out of 157
+10. Countries with Methodological Footnotes: 45 out of 157
+
+###########################################################################
+AUDITING UNSD EXCEL DATASET: 5_UN_Renewable_Resources | FILE: Renewable freshwater resources.xlsx
+###########################################################################
+1. Sheet Used: 'Data' | Measurement Unit: Million cubic metres (Million m3)
+2. Metadata Header Rows Skipped: 0 rows
+3. Footnotes Extracted: 3 definitions saved to -> 5_UN_Renewable_Resources_footnotes_dictionary.csv
+4. Data Sources (U=UNSD, E=Eurostat, O=OECD): {'U': 48, 'E': 28, nan: 14, 'O': 6}
+5. Total Countries/Areas: 96 | Duplicate Countries: 0
+6. Missing Values ('...'): 1031 out of 2304 cells (44.7%)
+7. Countries with 100% Missing Data (15): ['Liechtenstein', 'Recharge to groundwater = rainfall minus evapotranspiration over land area. However, most groundwater is not a freshwater resource as the high limestone permeability allows it to mix with seawater, becoming brackish.', 'Only the Central Lens (approx. 8 sq. km.) is considered a freshwater (<1,000 mg/L) resource. (RO is still performed, to reduce nitrate.) Other lenses are considered brackish-water resources. Recharge - from (3) - is prorated by lens area.', "Safe freshwater yield of Central Lens is 1.6 million Igpd, based on (a) groundwater monitoring, (b) Hydrogeologist's caculations of allowable lens thinning, and (c) Environmental Authority abstraction limits.", 'This is the sum of the national water resources available per watershed.', "Based on the CWC Study entitled 'Assessment of Water Resources of India- 2024'. The yearly and Long Term Average values are for Water Year (June-May) and not in Calendar Year (Jan-Dec).", 'Data filled in the above questionnaire is not entirely based on the formulae/definition of Questionnaire. ', 'Annual volumes of the internal surface flows and inflows from neighbouring countries are calculated by the method of GGI. Underground runoff is not taken into account.', 'Data on the intrinsic inflow of surface water (river runoff) without taking into account groundwater and precipitation.', 'Data refer to the hydrologic year (November to October).', 'Rainfall was exceptionally good for 2015.', 'This data comes from the Directorate of Water Resources Management and Planning (DGPRE). The desired level of disaggregation is not available.', 'The value is negative since the internal flow is also negative.', 'Renewable freshwater resources = Internal flow. The external inflow of surface water and groundwater is not included.', 'The value is estimated.']
+8. Countries with Negative Values (less than 0): ['Cabo Verde', 'Gambia', 'Trinidad and Tobago']
+9. Countries with Zero Values (equal to 0): []
+10. Countries with Methodological Footnotes: 17 out of 96
+10. Countries with Methodological Footnotes: 17 out of 96

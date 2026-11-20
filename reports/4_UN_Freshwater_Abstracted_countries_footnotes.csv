@@ -1,0 +1,46 @@
+﻿CountryID,Country,Source,All_Footnotes
+8,Albania,E,e
+20,Andorra,U,1
+28,Antigua and Barbuda,U,2
+50,Bangladesh,U,"3, 4, 5"
+112,Belarus,U,6
+56,Belgium,E,e
+68,Bolivia (Plurinational State of),U,"7, 8, 9"
+76,Brazil,U,10
+120,Cameroon,U,11
+446,"China, Macao Special Administrative Region",U,12
+191,Croatia,E,e
+192,Cuba,U,13
+196,Cyprus,E,e
+208,Denmark,E,"b, p"
+233,Estonia,E,e
+231,Ethiopia,U,"14,15"
+276,Germany,E,i
+300,Greece,E,"b, i"
+324,Guinea,U,16
+348,Hungary,E,i
+364,Iran (Islamic Republic of),U,17
+400,Jordan,U,18
+404,Kenya,U,19
+422,Lebanon,U,20
+458,Malaysia,U,"21, 22"
+470,Malta,E,e
+474,Martinique,U,23
+104,Myanmar,U,"24, 25"
+528,Netherlands,E,i
+807,North Macedonia,E,"b, i"
+634,Qatar,U,26
+638,Réunion,U,27
+882,Samoa,U,28
+686,Senegal,U,29
+724,Spain,E,e
+752,Sweden,E,"b, i"
+756,Switzerland,E,e
+768,Togo,U,30
+780,Trinidad and Tobago,U,"31, 32"
+788,Tunisia,U,33
+792,Türkiye,E,e
+800,Uganda,U,"34,35"
+804,Ukraine,U,36
+826,United Kingdom of Great Britain and Northern Ireland,E,i
+716,Zimbabwe,U,37
