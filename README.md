@@ -57,6 +57,10 @@ Full metadata and methodological footnotes are documented inside the `Data_Dicti
 | `Agri / Ind / Mun_Withdrawal` | $10^9\text{ m}^3/\text{year}$ | Sector-specific water withdrawals |
 | `Water_Stress_Total_Pct` | Percentage (`%`) | Freshwater withdrawal as a proportion of available resources |
 | `Water_Stress_Category` | Category `1` to `5` | UN SDG 6.4.2 Stress Classification |
+| `Stress_Obs_Status` | `A` / `E` / `I` / `O` | UN status of the stress value: Reported, Estimated, Imputed, Missing |
+| `Stress_Carried_Forward` | `True` / `False` | Stress value is identical to the previous year (last estimate carried forward) |
+| `Stress_Distinct_Values` | Count | Number of distinct stress values the country has over 2001–2023 |
+| `Stress_Forecastable` | `True` / `False` | Country has ≥ 5 distinct stress values, enough real variation to fit a trend |
 | `Any_Definition_Caveat` | `True` / `False` | Indicates if country data has specific methodological footnotes |
 
 ---
@@ -64,11 +68,13 @@ Full metadata and methodological footnotes are documented inside the `Data_Dicti
 ## 🚀 How to Run the Pipeline
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com
+   git clone https://github.com/petikovacs/data_analysis.git
    cd data_analysis
    ```
-2. **Install dependencies:**
+2. **Create a virtual environment and install dependencies:**
    ```bash
+   python -m venv .venv
+   # Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
    pip install -r requirements.txt
    ```
 3. **Run the audit and data cleaning scripts:**
@@ -82,6 +88,7 @@ Full metadata and methodological footnotes are documented inside the `Data_Dicti
 ## ⚠️ Analytical Caveats
 * Users conducting downstream modeling should inspect the `Any_Definition_Caveat` and `Abstracted_Footnote_Codes` columns, as certain countries report partial city coverage or include desalinated water.
 * Rows flagged with `Flag_Sector_Sum_Exceeds_Total = True` reflect minor discrepancies due to staggered source updates between FAO and national agencies.
+* **Water stress is not observed every year.** The UN carries the last estimate forward between survey years, so about 32% of stress values simply repeat the previous year (`Stress_Carried_Forward = True`), and 32 of 183 countries have fewer than 5 distinct values over 2001–2023. Time-series forecasts should use only countries with `Stress_Forecastable = True`, and should treat carried-forward values as gaps rather than as evidence of a flat trend.
 
 ---
 

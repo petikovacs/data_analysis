@@ -16,7 +16,12 @@ Inputs (from data/raw/):
     - Renewable freshwater resources.xlsx (UNSD)
 
 Outputs (to data/processed/):
-    - global_water_stress_cleaned_2001_2023.csv
+    - Master_Global_Water_Dataset_2001_2023.csv
+    - Master_Global_Water_Dataset_2001_2023.xlsx
+      (sheets: Master_Data, Data_Dictionary, Footnotes_Reference)
+
+Usage:
+    python src/02_clean_and_merge.py
 """
 
 import pandas as pd
@@ -32,6 +37,13 @@ REPORTS_DIR = BASE_DIR / "reports"
 
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 YEAR_MIN, YEAR_MAX = 2001, 2023
+OUTPUT_STEM = f"Master_Global_Water_Dataset_{YEAR_MIN}_{YEAR_MAX}"
+
+# A country's stress series is only worth forecasting if it actually moves.
+# UN SDG 6.4.2 carries the last estimate forward between survey years, so some
+# countries report one identical value for all 23 years.
+MIN_DISTINCT_STRESS_VALUES = 5
+VOLUME_DECIMALS = 6  # 10^9 m3 to 6 decimals = precision of 1,000 m3
 
 
 def iso3_to_m49(iso_code):
@@ -80,12 +92,12 @@ tot_symbols = df_fao[df_fao['Variable'] == 'Total water withdrawal'][['m49', 'Ye
 ).rename(columns={'Symbol': 'FAO_Total_Symbol'})
 
 df_fao_piv = pd.merge(df_fao_piv, tot_symbols, on=['m49', 'Year'], how='left')
-df_fao_piv.rename(columns={
+df_fao_piv = df_fao_piv.rename(columns={
     'Area': 'Country_FAO',
     'Industrial water withdrawal': 'Ind_Withdrawal_10e9_m3',
     'Municipal water withdrawal': 'Mun_Withdrawal_10e9_m3',
     'Total water withdrawal': 'Total_Withdrawal_FAO_10e9_m3'
-}, inplace=True)
+})
 
 # Master whitelist of valid UN M49 country codes (excludes Excel footnote rows)
 valid_countries_m49 = set(df_fao_piv['m49'].unique()).union(set(df_agri_clean['m49'].unique()))
@@ -104,23 +116,57 @@ df_stress_piv = df_stress.pivot_table(
     index=['m49', 'AREA', 'Year'], columns='ACTIVITY', values='OBS_VALUE', aggfunc='first'
 ).reset_index()
 df_stress_piv.columns.name = None
-df_stress_piv.rename(columns={
+
+# Keep the UN observation status of the total stress value
+# (A = reported by country, E = estimated, I = imputed, O = missing/other)
+stress_status = df_stress[df_stress['ACTIVITY'] == '_T'][['m49', 'Year', 'OBS_STATUS']].drop_duplicates(
+    subset=['m49', 'Year']
+).rename(columns={'OBS_STATUS': 'Stress_Obs_Status'})
+df_stress_piv = pd.merge(df_stress_piv, stress_status, on=['m49', 'Year'], how='left')
+
+df_stress_piv = df_stress_piv.rename(columns={
     'AREA': 'Country_SDG',
     '_T': 'Water_Stress_Total_Pct',
     'ISIC4_A01_A0210_A0322': 'Water_Stress_Agri_Pct',
     'ISIC4_BTFXE': 'Water_Stress_Ind_Pct',
     'ISIC4_GTT': 'Water_Stress_Services_Pct'
-}, inplace=True)
+})
 
 
 # 4. Clean UNSD Excel Files (Deduplicated & Strictly Filtered to Valid Countries)
+def split_unsd_sheet(filepath):
+    """Split a UNSD 'Data' sheet into its country-data block and its footnote block.
+
+    UNSD sheets list countries first, then a 'Footnote number' header row followed
+    by the footnote definitions. Footnote numbers (1, 2, 3, ...) overlap with real
+    M49 codes (4 = Afghanistan, 8 = Albania, ...), so filtering by valid country
+    codes alone is not enough: the footnote block must be cut off by position.
+
+    Returns:
+        (data_rows, footnotes) where footnotes has columns Footnote_Code, Explanation.
+    """
+    df_raw = pd.read_excel(filepath, sheet_name='Data')
+    marker = df_raw.index[df_raw['CountryID'].astype(str).str.strip() == 'Footnote number']
+    if len(marker) == 0:
+        return df_raw, pd.DataFrame(columns=['Footnote_Code', 'Explanation'])
+    cut = marker[0]
+    footnotes = df_raw.loc[cut + 1:, ['CountryID', 'Country']].dropna(subset=['CountryID'])
+    footnotes.columns = ['Footnote_Code', 'Explanation']
+    footnotes['Footnote_Code'] = footnotes['Footnote_Code'].astype(str).str.strip()
+    return df_raw.loc[:cut - 1].copy(), footnotes.reset_index(drop=True)
+
+
 def clean_unsd_excel(filepath, value_col, prefix):
-    """Parse UNSD Excel matrices, extract footnote caveats, convert units, and deduplicate."""
-    xl = pd.ExcelFile(filepath)
-    df_raw = xl.parse('Data')
+    """Parse UNSD Excel matrices, extract footnote caveats, convert units, and deduplicate.
+
+    Returns:
+        (long_df, footnotes): one row per (m49, Year) with the value in 10^9 m3,
+        plus the footnote definitions found at the bottom of the sheet.
+    """
+    df_raw, footnotes = split_unsd_sheet(filepath)
     df_raw['m49'] = pd.to_numeric(df_raw['CountryID'], errors='coerce')
-    
-    # Strict filtering to valid country codes (prevents ingesting footnote rows 1..37)
+
+    # Keep valid country codes only (footnote block was already removed above)
     df_data = df_raw[df_raw['m49'].isin(valid_countries_m49)].copy()
     df_data['m49'] = df_data['m49'].astype(int)
     
@@ -146,11 +192,11 @@ def clean_unsd_excel(filepath, value_col, prefix):
     # Deduplicate multi-source entries by prioritizing non-null observations
     df_melted = df_melted.sort_values(by=['m49', 'Year', value_col], na_position='last')
     df_melted = df_melted.drop_duplicates(subset=['m49', 'Year'], keep='first')
-    return df_melted
+    return df_melted, footnotes
 
 
-df_abs_clean = clean_unsd_excel(RAW_DIR / "Freshwater abstracted.xlsx", "Freshwater_Abstracted_UNSD_10e9_m3", "Abstracted")
-df_ren_clean = clean_unsd_excel(RAW_DIR / "Renewable freshwater resources.xlsx", "Renewable_Freshwater_10e9_m3", "Renewable")
+df_abs_clean, fn_abs = clean_unsd_excel(RAW_DIR / "Freshwater abstracted.xlsx", "Freshwater_Abstracted_UNSD_10e9_m3", "Abstracted")
+df_ren_clean, fn_ren = clean_unsd_excel(RAW_DIR / "Renewable freshwater resources.xlsx", "Renewable_Freshwater_10e9_m3", "Renewable")
 
 
 # 5. Merge All Datasets (1 Row per Country per Year)
@@ -173,11 +219,11 @@ sector_sum = (
 master['Calculated_Sector_Sum_10e9_m3'] = np.where(
     master[['Agri_Withdrawal_10e9_m3', 'Ind_Withdrawal_10e9_m3', 'Mun_Withdrawal_10e9_m3']].notna().any(axis=1),
     sector_sum, np.nan
-).round(4)
+).round(VOLUME_DECIMALS)
 
 # Compute accounting difference and eliminate floating-point artifacts (-0.0 and 1e-06)
-diff_val = (master['Calculated_Sector_Sum_10e9_m3'] - master['Total_Withdrawal_FAO_10e9_m3']).round(4)
-master['Diff_Sum_vs_Total_10e9_m3'] = np.where(diff_val.abs() < 1e-4, 0.0, diff_val)
+diff_val = (master['Calculated_Sector_Sum_10e9_m3'] - master['Total_Withdrawal_FAO_10e9_m3']).round(VOLUME_DECIMALS)
+master['Diff_Sum_vs_Total_10e9_m3'] = np.where(diff_val.abs() < 10 ** -VOLUME_DECIMALS, 0.0, diff_val)
 
 # Standardize decimal precision across all volumetric columns
 volume_cols = [
@@ -185,7 +231,7 @@ volume_cols = [
     'Total_Withdrawal_FAO_10e9_m3', 'Agri_Withdrawal_10e9_m3', 
     'Ind_Withdrawal_10e9_m3', 'Mun_Withdrawal_10e9_m3'
 ]
-master[volume_cols] = master[volume_cols].round(4)
+master[volume_cols] = master[volume_cols].round(VOLUME_DECIMALS)
 
 # Quality Flags
 master['Flag_Sector_Sum_Exceeds_Total'] = master['Diff_Sum_vs_Total_10e9_m3'] > 0.05
@@ -210,8 +256,84 @@ def categorize_stress(val):
 master['Water_Stress_Category'] = master['Water_Stress_Total_Pct'].apply(categorize_stress)
 
 
-# 7. Final Column Selection & Export
+# 7. Water Stress Data-Quality Features (for forecasting)
+master = master.sort_values(['m49', 'Year']).reset_index(drop=True)
+
+# True when the stress value is identical to the same country's previous year,
+# i.e. the UN carried the last estimate forward rather than observing a new one.
+prev_stress = master.groupby('m49')['Water_Stress_Total_Pct'].shift(1)
+master['Stress_Carried_Forward'] = (
+    master['Water_Stress_Total_Pct'].notna() & (master['Water_Stress_Total_Pct'] == prev_stress)
+)
+
+# Per-country summary: how many distinct stress values exist across the period
+master['Stress_Distinct_Values'] = master.groupby('m49')['Water_Stress_Total_Pct'].transform('nunique')
+master['Stress_Forecastable'] = master['Stress_Distinct_Values'] >= MIN_DISTINCT_STRESS_VALUES
+
+
+# 8. Final Column Selection & Export
 final_cols = [
     'm49', 'ISO3_Code', 'Country', 'Year',
     'Renewable_Freshwater_10e9_m3', 'Freshwater_Abstracted_UNSD_10e9_m3',
+    'Total_Withdrawal_FAO_10e9_m3', 'Calculated_Sector_Sum_10e9_m3', 'Diff_Sum_vs_Total_10e9_m3',
+    'Agri_Withdrawal_10e9_m3', 'Ind_Withdrawal_10e9_m3', 'Mun_Withdrawal_10e9_m3',
+    'Agri_Share_Pct', 'Ind_Share_Pct', 'Mun_Share_Pct',
+    'Water_Stress_Total_Pct', 'Water_Stress_Category',
+    'Water_Stress_Agri_Pct', 'Water_Stress_Ind_Pct', 'Water_Stress_Services_Pct',
+    'Stress_Obs_Status', 'Stress_Carried_Forward', 'Stress_Distinct_Values', 'Stress_Forecastable',
+    'FAO_Total_Symbol', 'Any_Definition_Caveat',
+    'Abstracted_Footnote_Codes', 'Renewable_Footnote_Codes',
+    'Flag_Sector_Sum_Exceeds_Total', 'Flag_Negative_Renewable',
 ]
+master = master[master['Year'].between(YEAR_MIN, YEAR_MAX)]
+master = master.dropna(subset=['Country'])[final_cols]
+
+DATA_DICTIONARY = [
+    ('m49', 'UN Numeric Code', 'UN M49 standard numeric country code (Primary Join Key).'),
+    ('ISO3_Code', '3-Letter Code', 'ISO 3166-1 alpha-3 country code (e.g., EGY, SAU, USA) for geospatial mapping.'),
+    ('Country', 'Text', 'Standardized official country or territory name.'),
+    ('Year', f'{YEAR_MIN} - {YEAR_MAX}', 'Calendar year (Unified common time period across all 5 sources).'),
+    ('Renewable_Freshwater_10e9_m3', '10^9 m3/year', 'Total renewable freshwater resources in billion cubic meters per year (Source: UNSD).'),
+    ('Freshwater_Abstracted_UNSD_10e9_m3', '10^9 m3/year', 'Total freshwater abstracted as officially reported by countries in billion m3/year (Source: UNSD).'),
+    ('Total_Withdrawal_FAO_10e9_m3', '10^9 m3/year', 'Total water withdrawal across all sectors in billion m3/year (Source: FAO AQUASTAT).'),
+    ('Calculated_Sector_Sum_10e9_m3', '10^9 m3/year', 'Sum of Agricultural + Industrial + Municipal water withdrawals in billion m3/year.'),
+    ('Diff_Sum_vs_Total_10e9_m3', '10^9 m3/year', 'Difference between Calculated_Sector_Sum and Total_Withdrawal_FAO for accounting consistency.'),
+    ('Agri_Withdrawal_10e9_m3', '10^9 m3/year', 'Water withdrawal for the Agricultural sector in billion m3/year (Source: FAO / OWID).'),
+    ('Ind_Withdrawal_10e9_m3', '10^9 m3/year', 'Water withdrawal for the Industrial sector in billion m3/year (Source: FAO AQUASTAT).'),
+    ('Mun_Withdrawal_10e9_m3', '10^9 m3/year', 'Water withdrawal for the Municipal/Domestic sector in billion m3/year (Source: FAO AQUASTAT).'),
+    ('Agri_Share_Pct / Ind_Share_Pct / Mun_Share_Pct', 'Percentage (%)', 'Sectoral percentage share of Total_Withdrawal_FAO.'),
+    ('Water_Stress_Total_Pct', 'Percentage (%)', 'Level of Water Stress: freshwater withdrawal as a proportion of available freshwater resources (SDG 6.4.2).'),
+    ('Water_Stress_Category', 'Category (1 to 5)', 'UN SDG 6.4.2 Stress Classification: No Stress (<25%), Low (25-50%), Medium (50-75%), High (75-100%), Critical (>100%).'),
+    ('Water_Stress_Agri / Ind / Services_Pct', 'Percentage (%)', 'Contribution of Agriculture, Industry, and Services sectors to the total water stress percentage.'),
+    ('Stress_Obs_Status', 'A, E, I, O', 'UN observation status of Water_Stress_Total_Pct: A = Reported by country, E = Estimated, I = Imputed, O = Missing/other.'),
+    ('Stress_Carried_Forward', 'True / False', 'True when the stress value equals the previous year for the same country (last estimate carried forward, not a new observation).'),
+    ('Stress_Distinct_Values', 'Count', f'Number of distinct stress values the country has across {YEAR_MIN}-{YEAR_MAX}.'),
+    ('Stress_Forecastable', 'True / False', f'True when the country has at least {MIN_DISTINCT_STRESS_VALUES} distinct stress values, i.e. enough real variation to fit a time-series trend.'),
+    ('FAO_Total_Symbol', 'A, E, I, X', 'FAO data reliability flag: A = Official national figure, E = Estimated, I = Imputed, X = External agency source.'),
+    ('Any_Definition_Caveat', 'True / False', 'True indicates the country has specific methodological footnotes (e.g., partial city coverage, sector exclusion, or desalination included).'),
+    ('Abstracted_Footnote_Codes / Renewable_Footnote_Codes', 'Codes / Numbers', "Specific footnote codes/numbers applicable to the country (refer to the 'Footnotes_Reference' sheet)."),
+    ('Flag_Sector_Sum_Exceeds_Total', 'True / False', 'True indicates (Agri + Ind + Mun) exceeds Total_Withdrawal_FAO by > 0.05 billion m3 due to staggered source updates.'),
+    ('Flag_Negative_Renewable', 'True / False', 'True indicates negative renewable freshwater balance (< 0) where evapotranspiration exceeds precipitation.'),
+]
+df_dictionary = pd.DataFrame(DATA_DICTIONARY, columns=['Column_Name', 'Unit_or_Values', 'Description'])
+
+df_footnotes = pd.concat([
+    fn_abs.assign(Source_Dataset='Freshwater Abstracted'),
+    fn_ren.assign(Source_Dataset='Renewable Resources'),
+], ignore_index=True)[['Source_Dataset', 'Footnote_Code', 'Explanation']]
+
+csv_path = PROCESSED_DIR / f"{OUTPUT_STEM}.csv"
+xlsx_path = PROCESSED_DIR / f"{OUTPUT_STEM}.xlsx"
+master.to_csv(csv_path, index=False, encoding='utf-8-sig')
+with pd.ExcelWriter(xlsx_path, engine='openpyxl') as writer:
+    master.to_excel(writer, sheet_name='Master_Data', index=False)
+    df_dictionary.to_excel(writer, sheet_name='Data_Dictionary', index=False)
+    df_footnotes.to_excel(writer, sheet_name='Footnotes_Reference', index=False)
+
+n_countries = master['m49'].nunique()
+n_forecastable = master.loc[master['Stress_Forecastable'], 'm49'].nunique()
+print(f"Saved {len(master):,} rows ({n_countries} countries, {YEAR_MIN}-{YEAR_MAX})")
+print(f"  -> {csv_path.relative_to(BASE_DIR)}")
+print(f"  -> {xlsx_path.relative_to(BASE_DIR)}")
+print(f"Stress values carried forward from previous year: {master['Stress_Carried_Forward'].mean():.1%}")
+print(f"Countries with enough variation to forecast: {n_forecastable} of {n_countries}")
