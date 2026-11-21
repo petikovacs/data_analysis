@@ -8,15 +8,17 @@ This project maps global renewable freshwater resources against sectoral water w
 ## 📂 Repository Structure
 ```text
 data_analysis/
-├── dashboard/                # Interactive dashboards & visual analytics (Upcoming)
+├── dashboard/                # Interactive dashboard (upcoming)
 ├── data/
 │   ├── raw/                  # Unmodified raw datasets from UNSD, FAOSTAT & OWID
 │   └── processed/            # Cleaned & merged datasets (CSV & Multi-sheet Excel)
-├── notebooks/                # Exploratory Data Analysis (EDA) & Time-Series Forecasting
-├── reports/                  # Data audit/profiling outputs, final report & presentation
+├── notebooks/
+│   └── 03_forecast_water_stress.ipynb  # Back-tested time-series forecast to 2035 & driver regression
+├── reports/                  # Data audit/profiling outputs, forecast tables & figures/
 ├── src/
 │   ├── 01_audit_and_profile.py   # Initial schema inspection & data quality profiling
-│   └── 02_clean_and_merge.py     # Reproducible ETL, entity matching & cleaning pipeline
+│   ├── 02_clean_and_merge.py     # Reproducible ETL, entity matching & cleaning pipeline
+│   └── water_forecast.py         # Forecasting models, back-testing & risk functions
 ├── requirements.txt          # Python dependencies
 └── README.md                 # Project documentation
 ```
@@ -82,6 +84,37 @@ Full metadata and methodological footnotes are documented inside the `Data_Dicti
    python src/01_audit_and_profile.py
    python src/02_clean_and_merge.py
    ```
+4. **Run the forecast notebook** (open it in VS Code / Jupyter, or execute it headless):
+   ```bash
+   python -m nbconvert --to notebook --execute --inplace notebooks/03_forecast_water_stress.ipynb
+   ```
+
+---
+
+## 📈 Forecasting Water Stress (2024–2035)
+Notebook: `notebooks/03_forecast_water_stress.ipynb` · Functions: `src/water_forecast.py`
+
+**Method**
+* Fitted only on **genuine** UN observations (carried-forward repeats removed); 151 countries.
+* **Back-tested** four models at three cut-offs (trained to 2015, 2016, 2018; predicting unseen later years).
+  A full-history linear trend was the *worst* model; a **damped recent trend** (latest value + fading slope of the last 8 observations) had the lowest error at every cut-off and beats the naive "no change" baseline.
+* Damping factor φ = 0.5 **tuned on the 2016 cut-off** and confirmed on 2018.
+* **80% uncertainty ranges calibrated from back-test errors** (87% coverage on unseen data, i.e. slightly conservative).
+* A **"recent trend continues"** scenario (no damping) is reported alongside as a stress test, not a prediction.
+
+**Key findings**
+* 16 countries are already in **Critical** stress (>100%), led by Kuwait, UAE, Saudi Arabia and Libya.
+* **Tunisia and Pakistan** (just under 100%, data to 2023) have close to a 50% chance of reaching Critical stress by 2035.
+* If recent trends continue, **Iraq, North Macedonia, Lebanon, Cabo Verde and Mali** would pass 100% by 2033–2035.
+* Agriculture-heavy water use is linked to higher stress (Spearman ρ ≈ 0.29, p < 0.001), but the effect is weak (R² ≈ 0.08): a country's available water matters more than its sector mix.
+
+**Outputs**
+| File | Contents |
+| :--- | :--- |
+| `data/processed/Water_Stress_Forecast_2024_2035.csv` | Yearly forecast per country: base forecast, 80% range, trend-continues scenario, category |
+| `reports/06_Countries_At_Risk_2035.csv` | Countries at risk of crossing 75% / 100%, with probability and crossing years |
+| `reports/07_Forecast_Backtest_Metrics.csv` | Back-test error of each model at each cut-off |
+| `reports/figures/fc_*.png` | Charts used in the notebook |
 
 ---
 

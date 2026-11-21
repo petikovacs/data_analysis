@@ -2,3 +2,8 @@ pandas
 numpy
 pycountry
 openpyxl
+scipy
+statsmodels
+matplotlib
+ipykernel
+nbconvert

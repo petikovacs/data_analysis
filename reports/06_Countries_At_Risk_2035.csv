@@ -1,0 +1,30 @@
+﻿Threshold,Country,ISO3_Code,Last_Real_Data_Year,Latest_Stress_Pct,Base_2035_Pct,Trend_Continues_2035_Pct,Chance_Above_2035_Pct,Base_Crossing_Year,Crossing_If_Trend_Continues
+Critical (100%),Tunisia,TUN,2023,97.05,97.42,101.46,48,,2032
+Critical (100%),Pakistan,PAK,2023,98.12,95.23,63.47,46,,
+Critical (100%),Sri Lanka,LKA,2005,90.79,90.7,88.09,45,,
+Critical (100%),Republic of Korea,KOR,2005,85.22,85.68,98.93,42,,
+Critical (100%),Eswatini,SWZ,2005,77.56,77.94,88.87,37,,
+Critical (100%),Iran (Islamic Republic of),IRN,2020,80.43,78.69,54.33,32,,
+Critical (100%),Tajikistan,TJK,2019,69.94,68.85,52.53,24,,
+Critical (100%),Iraq,IRQ,2022,67.81,70.34,100.7,23,,2035
+Critical (100%),South Africa,ZAF,2022,67.6,68.73,82.24,22,,
+Critical (100%),North Macedonia,MKD,2023,65.88,69.54,109.77,22,,2033
+Critical (100%),India,IND,2020,65.87,65.81,64.93,21,,
+Critical (100%),Lebanon,LBN,2015,58.79,61.11,105.25,21,,2033
+Critical (100%),Cabo Verde,CPV,2022,59.68,63.61,110.72,18,,2033
+Critical (100%),Mali,MLI,2020,42.95,47.64,113.35,8,,2033
+High (75%),Iraq,IRQ,2022,67.81,70.34,100.7,45,,2025
+High (75%),Tajikistan,TJK,2019,69.94,68.85,52.53,44,,
+High (75%),North Macedonia,MKD,2023,65.88,69.54,109.77,44,,2026
+High (75%),South Africa,ZAF,2022,67.6,68.73,82.24,43,,2029
+High (75%),India,IND,2020,65.87,65.81,64.93,40,,
+High (75%),Cabo Verde,CPV,2022,59.68,63.61,110.72,37,,2026
+High (75%),Lebanon,LBN,2015,58.79,61.11,105.25,37,,2024
+High (75%),Armenia,ARM,2022,61.97,61.39,54.37,34,,
+High (75%),Azerbaijan,AZE,2022,57.53,58.34,68.12,30,,
+High (75%),Belgium,BEL,2021,52.83,52.72,51.34,24,,
+High (75%),Kyrgyzstan,KGZ,2017,49.72,48.7,31.37,23,,
+High (75%),Zimbabwe,ZWE,2020,46.09,47.82,71.99,20,,
+High (75%),Dominican Republic,DOM,2010,39.55,41.14,79.37,19,,2033
+High (75%),Mali,MLI,2020,42.95,47.64,113.35,19,,2027
+High (75%),Nigeria,NGA,2010,29.71,31.53,75.28,10,,2035
