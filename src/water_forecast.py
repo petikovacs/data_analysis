@@ -196,12 +196,14 @@ def summarise_backtest(bt):
 
     Metrics (all in percentage points of water stress):
         MAE        mean absolute error
+        RMSE       root mean squared error (penalises large misses more than MAE)
         Median_AE  median absolute error (robust to a few extreme countries)
         Bias       mean signed error (positive = model over-predicts)
         Win_Rate   share of countries where this model has the lowest error
     """
-    bt = bt.assign(AbsError=bt['Error'].abs())
+    bt = bt.assign(AbsError=bt['Error'].abs(), SqError=bt['Error'] ** 2)
     summary = bt.groupby('Model').agg(MAE=('AbsError', 'mean'),
+                                      RMSE=('SqError', lambda s: np.sqrt(s.mean())),
                                       Median_AE=('AbsError', 'median'),
                                       Bias=('Error', 'mean'))
     per_country = bt.groupby(['m49', 'Model'])['AbsError'].mean().unstack()

@@ -44,6 +44,7 @@ OUTPUT_STEM = f"Master_Global_Water_Dataset_{YEAR_MIN}_{YEAR_MAX}"
 # countries report one identical value for all 23 years.
 MIN_DISTINCT_STRESS_VALUES = 5
 VOLUME_DECIMALS = 6  # 10^9 m3 to 6 decimals = precision of 1,000 m3
+MISMATCH_FACTOR = 10  # flag UNSD abstraction more than 10x above/below FAO total withdrawal
 
 
 def iso3_to_m49(iso_code):
@@ -243,6 +244,21 @@ master['Agri_Share_Pct'] = ((master['Agri_Withdrawal_10e9_m3'] / master['Total_W
 master['Ind_Share_Pct'] = ((master['Ind_Withdrawal_10e9_m3'] / master['Total_Withdrawal_FAO_10e9_m3']) * 100).round(2)
 master['Mun_Share_Pct'] = ((master['Mun_Withdrawal_10e9_m3'] / master['Total_Withdrawal_FAO_10e9_m3']) * 100).round(2)
 
+# Work-plan pressure indicator: freshwater abstracted / renewable freshwater resources (%).
+# Both inputs come from UNSD for the same country and year, matching UNSD's own published ratio.
+# NOT the official SDG 6.4.2 indicator: it ignores environmental flow requirements.
+renewable_positive = master['Renewable_Freshwater_10e9_m3'].where(master['Renewable_Freshwater_10e9_m3'] > 0)
+master['Abstraction_to_Renewable_Pct'] = (
+    master['Freshwater_Abstracted_UNSD_10e9_m3'] / renewable_positive * 100
+).round(2)
+
+# Plausibility check between the two independent volume sources: UNSD abstraction should be of the same
+# order as FAO total withdrawal. A 10x gap points to partial coverage (e.g. city-only data, see footnotes)
+# or a reporting/unit error (e.g. El Salvador ~200x), so the work-plan ratio is unreliable for that row.
+unsd_vs_fao = master['Freshwater_Abstracted_UNSD_10e9_m3'] / master['Total_Withdrawal_FAO_10e9_m3'].where(
+    master['Total_Withdrawal_FAO_10e9_m3'] > 0)
+master['Flag_UNSD_FAO_Mismatch'] = (unsd_vs_fao > MISMATCH_FACTOR) | (unsd_vs_fao < 1 / MISMATCH_FACTOR)
+
 # UN SDG 6.4.2 Water Stress Categorization
 def categorize_stress(val):
     """Classify total water stress percentage into official UN SDG 6.4.2 tiers."""
@@ -277,13 +293,13 @@ final_cols = [
     'Renewable_Freshwater_10e9_m3', 'Freshwater_Abstracted_UNSD_10e9_m3',
     'Total_Withdrawal_FAO_10e9_m3', 'Calculated_Sector_Sum_10e9_m3', 'Diff_Sum_vs_Total_10e9_m3',
     'Agri_Withdrawal_10e9_m3', 'Ind_Withdrawal_10e9_m3', 'Mun_Withdrawal_10e9_m3',
-    'Agri_Share_Pct', 'Ind_Share_Pct', 'Mun_Share_Pct',
+    'Agri_Share_Pct', 'Ind_Share_Pct', 'Mun_Share_Pct', 'Abstraction_to_Renewable_Pct',
     'Water_Stress_Total_Pct', 'Water_Stress_Category',
     'Water_Stress_Agri_Pct', 'Water_Stress_Ind_Pct', 'Water_Stress_Services_Pct',
     'Stress_Obs_Status', 'Stress_Carried_Forward', 'Stress_Distinct_Values', 'Stress_Forecastable',
     'FAO_Total_Symbol', 'Any_Definition_Caveat',
     'Abstracted_Footnote_Codes', 'Renewable_Footnote_Codes',
-    'Flag_Sector_Sum_Exceeds_Total', 'Flag_Negative_Renewable',
+    'Flag_Sector_Sum_Exceeds_Total', 'Flag_Negative_Renewable', 'Flag_UNSD_FAO_Mismatch',
 ]
 master = master[master['Year'].between(YEAR_MIN, YEAR_MAX)]
 master = master.dropna(subset=['Country'])[final_cols]
@@ -302,7 +318,8 @@ DATA_DICTIONARY = [
     ('Ind_Withdrawal_10e9_m3', '10^9 m3/year', 'Water withdrawal for the Industrial sector in billion m3/year (Source: FAO AQUASTAT).'),
     ('Mun_Withdrawal_10e9_m3', '10^9 m3/year', 'Water withdrawal for the Municipal/Domestic sector in billion m3/year (Source: FAO AQUASTAT).'),
     ('Agri_Share_Pct / Ind_Share_Pct / Mun_Share_Pct', 'Percentage (%)', 'Sectoral percentage share of Total_Withdrawal_FAO.'),
-    ('Water_Stress_Total_Pct', 'Percentage (%)', 'Level of Water Stress: freshwater withdrawal as a proportion of available freshwater resources (SDG 6.4.2).'),
+    ('Abstraction_to_Renewable_Pct', 'Percentage (%)', 'Work-plan pressure indicator: UNSD freshwater abstracted / UNSD renewable freshwater resources x 100 (same year). Preliminary indicator, NOT the official SDG 6.4.2 (ignores environmental flow requirements).'),
+    ('Water_Stress_Total_Pct', 'Percentage (%)', 'Official UN SDG 6.4.2 water stress: total freshwater withdrawal / (total renewable freshwater resources - environmental flow requirements) x 100.'),
     ('Water_Stress_Category', 'Category (1 to 5)', 'UN SDG 6.4.2 Stress Classification: No Stress (<25%), Low (25-50%), Medium (50-75%), High (75-100%), Critical (>100%).'),
     ('Water_Stress_Agri / Ind / Services_Pct', 'Percentage (%)', 'Contribution of Agriculture, Industry, and Services sectors to the total water stress percentage.'),
     ('Stress_Obs_Status', 'A, E, I, O', 'UN observation status of Water_Stress_Total_Pct: A = Reported by country, E = Estimated, I = Imputed, O = Missing/other.'),
@@ -314,6 +331,7 @@ DATA_DICTIONARY = [
     ('Abstracted_Footnote_Codes / Renewable_Footnote_Codes', 'Codes / Numbers', "Specific footnote codes/numbers applicable to the country (refer to the 'Footnotes_Reference' sheet)."),
     ('Flag_Sector_Sum_Exceeds_Total', 'True / False', 'True indicates (Agri + Ind + Mun) exceeds Total_Withdrawal_FAO by > 0.05 billion m3 due to staggered source updates.'),
     ('Flag_Negative_Renewable', 'True / False', 'True indicates negative renewable freshwater balance (< 0) where evapotranspiration exceeds precipitation.'),
+    ('Flag_UNSD_FAO_Mismatch', 'True / False', 'True when UNSD freshwater abstracted is more than 10x above or below FAO total withdrawal for the same year (partial coverage or reporting/unit error); Abstraction_to_Renewable_Pct is unreliable for these rows.'),
 ]
 df_dictionary = pd.DataFrame(DATA_DICTIONARY, columns=['Column_Name', 'Unit_or_Values', 'Description'])
 
