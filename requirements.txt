@@ -5,5 +5,7 @@ openpyxl
 scipy
 statsmodels
 matplotlib
+plotly
+kaleido
 ipykernel
 nbconvert

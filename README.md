@@ -13,12 +13,14 @@ data_analysis/
 │   ├── raw/                  # Unmodified raw datasets from UNSD, FAOSTAT & OWID
 │   └── processed/            # Cleaned & merged datasets (CSV & Multi-sheet Excel)
 ├── notebooks/
+│   ├── 02_eda_and_maps.ipynb           # Exploratory data analysis & geospatial mapping
 │   └── 03_forecast_water_stress.ipynb  # Back-tested time-series forecast to 2035 & driver regression
-├── reports/                  # Data audit/profiling outputs, forecast tables & figures/
+├── reports/                  # Audit outputs, forecast tables, figures/ (PNG) & maps/ (interactive HTML + PNG)
 ├── src/
 │   ├── 01_audit_and_profile.py   # Initial schema inspection & data quality profiling
 │   ├── 02_clean_and_merge.py     # Reproducible ETL, entity matching & cleaning pipeline
-│   └── water_forecast.py         # Forecasting models, back-testing & risk functions
+│   ├── water_forecast.py         # Forecasting models, back-testing & risk functions
+│   └── water_maps.py             # Reusable Plotly world-map builders (notebooks & dashboard)
 ├── requirements.txt          # Python dependencies
 └── README.md                 # Project documentation
 ```
@@ -84,10 +86,32 @@ Full metadata and methodological footnotes are documented inside the `Data_Dicti
    python src/01_audit_and_profile.py
    python src/02_clean_and_merge.py
    ```
-4. **Run the forecast notebook** (open it in VS Code / Jupyter, or execute it headless):
+4. **Run the notebooks** (open them in VS Code / Jupyter, or execute headless). Run 03 before 02, because the 2035 risk map in 02 reads the forecast output:
    ```bash
    python -m nbconvert --to notebook --execute --inplace notebooks/03_forecast_water_stress.ipynb
+   python -m nbconvert --to notebook --execute --inplace notebooks/02_eda_and_maps.ipynb
    ```
+
+---
+
+## 🗺️ Exploratory Analysis & Geospatial Mapping
+Notebook: `notebooks/02_eda_and_maps.ipynb` · Map functions: `src/water_maps.py`
+
+**Maps** (`reports/maps/`: open the `.html` files in a browser for hover, zoom and the year slider)
+| Map | Shows |
+| :--- | :--- |
+| `map_01_stress_latest` | UN water stress tier of every country (latest year) |
+| `map_02_stress_animation.html` | Animated 2001–2023 stress map with year slider |
+| `map_03_agri_share` | Share of water withdrawn for agriculture |
+| `map_04_data_freshness` | Year of each country's latest genuine (non-repeated) observation |
+| `map_05_critical_risk_2035` | Chance of Critical stress (>100%) by 2035, from the forecast |
+
+**Key findings**
+* Only ~30% of stress values are reported directly by countries; ~34% repeat the previous year, and for 46 countries the latest real observation is from 2010 or earlier.
+* Stress is extremely unequal: the median country withdraws ~10% of its water, while 16 countries exceed 100%. They form one belt across **North Africa, the Arabian Peninsula and Central Asia**.
+* Tier composition barely changed between 2001 and 2023 (15 Critical countries in both years, same-country panel).
+* **Agriculture** is the largest water user in 107 of 179 countries and causes most of the stress in 17 of the 20 most stressed; the exceptions are Gulf states where municipal use dominates.
+* Global withdrawals grew ~6% from 2001 to 2023; agriculture's share rose from 67% to 71%.
 
 ---
 
@@ -127,5 +151,5 @@ Notebook: `notebooks/03_forecast_water_stress.ipynb` · Functions: `src/water_fo
 
 ## 👥 Team Members
 * **Eman Jmaous** – Data Engineering & ETL Pipeline
-* **[Member 2 Name]** – Exploratory Data Analysis & Geospatial Mapping
+* **Mohamed Ghassen Boughalmi** – Exploratory Data Analysis & Geospatial Mapping
 * **[Member 3 Name]** – Time-Series Forecasting & Reporting
