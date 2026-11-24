@@ -8,7 +8,7 @@ This project maps global renewable freshwater resources against sectoral water w
 ## 📂 Repository Structure
 ```text
 data_analysis/
-├── dashboard/                # Interactive dashboard (upcoming)
+├── dashboard/                # Streamlit dashboard: app.py (overview) + pages/ (map, country, risk)
 ├── data/
 │   ├── raw/                  # Unmodified raw datasets from UNSD, FAOSTAT & OWID
 │   └── processed/            # Cleaned & merged datasets (CSV & Multi-sheet Excel)
@@ -149,6 +149,26 @@ Notebook: `notebooks/03_forecast_water_stress.ipynb` · Functions: `src/water_fo
 | `reports/06_Countries_At_Risk_2035.csv` | Countries at risk of crossing 75% / 100%, with probability and crossing years |
 | `reports/07_Forecast_Backtest_Metrics.csv` | Back-test error of each model at each cut-off |
 | `reports/figures/fc_*.png` | Charts used in the notebook |
+
+---
+
+## 🖥️ Interactive Dashboard (Streamlit)
+Folder: `dashboard/` · Data helpers: `dashboard/data.py` · Maps reuse `src/water_maps.py`
+
+**Run it** (from the repository root, after `pip install -r requirements.txt`):
+```bash
+streamlit run dashboard/app.py
+```
+The dashboard opens in your browser (usually http://localhost:8501).
+
+| Page | What you can do |
+| :--- | :--- |
+| **Overview** (`app.py`) | Headline numbers, latest UN stress map, key findings and how to read the tiers |
+| **World Map** | Observed stress for any year 2001–2023 (or animated), forecast stress for any year 2024–2035, or agriculture's share of water use; tier counts below the map |
+| **Country View** | Pick a country: stress history with each value marked as reported / estimated / imputed / carried forward, the 2035 forecast with its 80% range and the "trend continues" scenario, the sector mix of withdrawals, data-quality notes and a CSV download |
+| **Countries at Risk** | Countries that may cross 75% or 100% by 2035: risk map, chance ranking, crossing years and a CSV download |
+
+The dashboard only reads files produced by the pipeline and notebooks (`data/processed/` and `reports/06_Countries_At_Risk_2035.csv`); it recalculates nothing, so its numbers always match the report.
 
 ---
 
