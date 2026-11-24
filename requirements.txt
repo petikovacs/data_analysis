@@ -9,3 +9,4 @@ plotly
 kaleido
 ipykernel
 nbconvert
+streamlit>=1.37
