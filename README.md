@@ -3,6 +3,8 @@
 ## 📌 Project Overview
 This project maps global renewable freshwater resources against sectoral water withdrawals (Agricultural, Industrial, and Municipal) from **2001 to 2023**. By integrating multi-source environmental datasets into a unified, reproducible Python pipeline, this repository provides clean, analysis-ready data and time-series forecasting to identify regions heading toward **Critical Water Stress** (UN SDG Indicator 6.4.2).
 
+📄 **Full project report:** [`reports/Project_Report.md`](reports/Project_Report.md) – data, methods, findings, the 2035 forecast and team contributions in one document.
+
 ---
 
 ## 📂 Repository Structure
@@ -16,6 +18,7 @@ data_analysis/
 │   ├── 02_eda_and_maps.ipynb           # Exploratory data analysis & geospatial mapping
 │   └── 03_forecast_water_stress.ipynb  # Back-tested time-series forecast to 2035 & driver regression
 ├── reports/                  # Audit outputs, forecast tables, figures/ (PNG) & maps/ (interactive HTML + PNG)
+│   └── Project_Report.md     # Final project report
 ├── src/
 │   ├── 01_audit_and_profile.py   # Initial schema inspection & data quality profiling
 │   ├── 02_clean_and_merge.py     # Reproducible ETL, entity matching & cleaning pipeline
@@ -162,4 +165,6 @@ Notebook: `notebooks/03_forecast_water_stress.ipynb` · Functions: `src/water_fo
 ## 👥 Team Members
 * **Eman Jmaous** – Data Engineering & ETL Pipeline
 * **Mohamed Ghassen Boughalmi** – Exploratory Data Analysis & Geospatial Mapping
-* **[Member 3 Name]** – Time-Series Forecasting & Reporting
+* **Péter Kovács** – Project Report ([`reports/Project_Report.md`](reports/Project_Report.md))
+* **Afzal Mahmud Nakib Khan** – Interactive Streamlit Dashboard & Visualisation
+* **Himel Das** – Project Presentation (Slides)
